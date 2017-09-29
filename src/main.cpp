@@ -1,48 +1,41 @@
-/*
- *  This sketch demonstrates how to scan WiFi networks.
- *  The API is almost the same as with the WiFi Shield library,
- *  the most obvious difference being the different file you need to include:
- */
-#include "ESP8266WiFi.h"
+#include <ESP8266WiFi.h>
+#include <CMMC_OTA.h>
 
-void setup() {
+#ifndef WIFI_SSID
+  #define WIFI_SSID       "Vicente Lyrio's Wi-Fi Network"
+  #define WIFI_PASSPHRASE "giuliaCarina"
+#endif
+
+CMMC_OTA ota;
+
+void init_hardware()
+{
+  WiFi.disconnect(true);
   Serial.begin(115200);
-
-  // Set WiFi to station mode and disconnect from an AP if it was previously connected
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
+  Serial.flush();
+  Serial.println();
+  Serial.println();
+  Serial.println("being started...");
   delay(100);
 
-  Serial.println("Setup done");
+  WiFi.begin(WIFI_SSID, WIFI_PASSPHRASE);
+  while (WiFi.status() != WL_CONNECTED) {
+   Serial.printf("connecting %s:%s \r\n", WIFI_SSID, WIFI_PASSPHRASE);
+   delay(100);
+ }
+
+  Serial.print("READY!! IP address: ");
+
+  Serial.println(WiFi.localIP());
 }
 
-void loop() {
-  Serial.println("scan start");
+void setup()
+{
+  init_hardware();
+  ota.init();
+}
 
-  // WiFi.scanNetworks will return the number of networks found
-  int n = WiFi.scanNetworks();
-  Serial.println("scan done");
-  if (n == 0)
-    Serial.println("no networks found");
-  else
-  {
-    Serial.print(n);
-    Serial.println(" networks found");
-    for (int i = 0; i < n; ++i)
-    {
-      // Print SSID and RSSI for each network found
-      Serial.print(i + 1);
-      Serial.print(": ");
-      Serial.print(WiFi.SSID(i));
-      Serial.print(" (");
-      Serial.print(WiFi.RSSI(i));
-      Serial.print(")");
-      Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE)?" ":"*");
-      delay(10);
-    }
-  }
-  Serial.println("");
-
-  // Wait a bit before scanning again
-  delay(5000);
+void loop()
+{
+  ota.loop();
 }
