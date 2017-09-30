@@ -55,7 +55,9 @@ class Wifi {
         else if (error == OTA_END_ERROR) Serial.println("End Failed");
       });
 
+      Serial.println();
       Serial.println("Starting Wifi Setup");
+      Serial.println("-----------------------");
 
       // Connecting to wifi
       WiFi.mode(WIFI_STA);
