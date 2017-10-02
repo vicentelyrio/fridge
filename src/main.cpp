@@ -24,6 +24,4 @@ void setup() {
 void loop() {
   wifi.loop();
   thermometers.loop();
-
-  delay(1000);
 }

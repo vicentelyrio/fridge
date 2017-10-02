@@ -3,11 +3,28 @@
 
 class Thermometers {
   uint8_t temp_precision;
+  unsigned long previousMillis = 0;
+  const long delay = 700;
+
   DallasTemperature sensors;
+
+  // TODO Figure how to put this info in the config
   DeviceAddress beerThermometer = { 0x28, 0xFF, 0xF5, 0x6B, 0xA1, 0x16, 0x04, 0x42 };
   DeviceAddress fridgeThermometer = { 0x28, 0xFF, 0xA7, 0x6B, 0xA1, 0x16, 0x04, 0x54 };
-  char* beerThermometerName = "Beer Thermometer";
-  char* fridgeThermometerName = "Fridge Thermometer";
+
+  String beerThermometerName = "Beer Thermometer";
+  String fridgeThermometerName = "Fridge Thermometer";
+
+  float getTemperature(DeviceAddress deviceAddress, DallasTemperature sensors) {
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= delay) {
+      sensors.requestTemperatures();
+      previousMillis = currentMillis;
+
+      return sensors.getTempC(deviceAddress);
+    }
+  }
 
   void printAddress(DeviceAddress deviceAddress) {
     Serial.print("Address: ");
@@ -19,8 +36,7 @@ class Thermometers {
   }
 
   void printTemperature(DeviceAddress deviceAddress, DallasTemperature sensors) {
-    float tempC = sensors.getTempC(deviceAddress);
-    Serial.print("Temp: ");
+    float tempC = getTemperature(deviceAddress, sensors);
     Serial.print(tempC);
     Serial.println("ºC");
   }
@@ -30,18 +46,19 @@ class Thermometers {
     Serial.println(sensors.getResolution(deviceAddress));
   }
 
-  void printData(char* deviceName, DeviceAddress deviceAddress, DallasTemperature sensors) {
+  void printData(String deviceName, DeviceAddress deviceAddress, DallasTemperature sensors) {
     Serial.println();
-    Serial.println(deviceName);
-    Serial.println("-----------------------");
+    Serial.print(deviceName);
+    Serial.print(" - ");
     printTemperature(deviceAddress, sensors);
   }
 
-  void printDetails(char* deviceName, DeviceAddress deviceAddress, DallasTemperature sensors) {
+  void printDetails(String deviceName, DeviceAddress deviceAddress, DallasTemperature sensors) {
     Serial.println("");
     Serial.println(deviceName);
     Serial.println("-----------------------");
     printAddress(deviceAddress);
+    printTemperature(deviceAddress, sensors);
     printResolution(deviceAddress, sensors);
   }
 
@@ -56,8 +73,18 @@ class Thermometers {
     {
     }
 
+    float getBeerTemp() {
+      return getTemperature(beerThermometer, sensors);
+    }
+
+    float getFridgeTemp() {
+      return getTemperature(fridgeThermometer, sensors);
+    }
+
     void setup() {
       sensors.begin();
+
+      Serial.print(sensors.getDeviceCount(), DEC);
 
       sensors.setResolution(beerThermometer, temp_precision);
       sensors.setResolution(fridgeThermometer, temp_precision);
@@ -67,7 +94,13 @@ class Thermometers {
     }
 
     void loop() {
-      printData(beerThermometerName, beerThermometer, sensors);
-      printData(fridgeThermometerName, fridgeThermometer, sensors);
+      unsigned long currentMillis = millis();
+
+      if (currentMillis - previousMillis >= delay) {
+        previousMillis = currentMillis;
+
+        printData(beerThermometerName, beerThermometer, sensors);
+        printData(fridgeThermometerName, fridgeThermometer, sensors);
+      }
     }
 };
