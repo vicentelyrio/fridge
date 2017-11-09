@@ -1,108 +1,110 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
+#include <Config.h>
+#include <Wifi.h>
 
-class Wifi {
-  const char* _ssid;
-  const char* _pass;
-  const char* _hostname;
-  const char* _hostpass;
+bool shouldSaveConfig = false;
+char blynk_token[34] = "";
 
-  void onStart() {
-    ArduinoOTA.onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
+WiFiManager wifiManager;
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    });
-  }
+static void saveConfigCallback() {
+  shouldSaveConfig = true;
+}
 
-  void onEnd() {
-    ArduinoOTA.onEnd([]() {
-      Serial.println("\nEnd");
-    });
-  }
+static void setConfigModeCallback(WiFiManager *wifiManager) {
+  display.println("Config mode\n\nName: " + wifiManager->getConfigPortalSSID() +  "\nIP: " + WiFi.softAPIP(), 1, 0, 0);
 
-  void onError() {
-    ArduinoOTA.onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
-  }
+  Serial.println(WiFi.softAPIP());
+  Serial.println(wifiManager->getConfigPortalSSID());
+}
 
-  void onProgress() {
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    });
-  }
+Wifi::Wifi() {}
 
-  void configureWifi() {
-    Serial.println();
-    Serial.println("Connecting to Wifi...");
+IPAddress Wifi::getIP() {
+  return WiFi.localIP();
+}
 
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(_ssid, _pass);
+char* Wifi::getBlynkToken() {
+  return blynk_token;
+}
 
-    // TODO
-    // Change for a counting tries
-    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-      Serial.println();
-      Serial.println("Connection Failed! Rebooting...");
-      delay(5000);
-      ESP.restart();
+void Wifi::resetConfig() {
+  SPIFFS.format();
+  wifiManager.resetSettings();
+  display.println("Data cleared", 1, 0, 16);
+  delay(1000);
+  display.println("Restarting", 1, 0, 20);
+  delay(500);
+  ESP.reset();
+}
+
+void Wifi::getConfig() {
+  if(SPIFFS.begin()) {
+    if(SPIFFS.exists("/config.json")) {
+      File configFile = SPIFFS.open("/config.json", "r");
+
+      if(configFile) {
+        size_t size = configFile.size();
+        std::unique_ptr<char[]> buf(new char[size]);
+        configFile.readBytes(buf.get(), size);
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        // json.printTo(Serial);
+
+        if(json.success()) {
+          strcpy(blynk_token, json["blynk_token"]);
+        }
+        else {
+          Serial.println("failed to load json config");
+          display.println("Failed to load\nWifi config", 1, 0, 0);
+        }
+      }
     }
+  }
+  else {
+    Serial.println("File System mount failed");
+    display.println("Failed to mount\nFile System", 1, 0, 0);
+  }
+}
 
-    Serial.println();
-    Serial.println("Wifi Ready");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+void Wifi::saveConfig(char* blynk_token) {
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  json["blynk_token"] = blynk_token;
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if(!configFile) {
+    Serial.println("failed to open config file for writing");
+    display.println("Failed to save", 1, 0, 0);
   }
 
-  public:
-    Wifi(
-      const char* ssid,
-      const char* pass,
-      const char* hostname,
-      const char* hostpass
-    )
-    :
-    _ssid(ssid),
-    _pass(pass),
-    _hostname(hostname),
-    _hostpass(hostpass)
-    { }
+  // json.printTo(Serial);
+  json.printTo(configFile);
+  display.println("Wifi config\nsaved", 1, 0, 0);
+  configFile.close();
+}
 
-    void setup() {
-      Serial.println();
-      Serial.println("Starting Wifi Setup");
+void Wifi::setup() {
+  getConfig();
 
-      onStart();
-      onEnd();
-      onProgress();
-      onError();
-      configureWifi();
+  WiFiManagerParameter custom_blynk_token("blynk", "blynk token", blynk_token, 36);
 
-      Serial.println();
-      Serial.println("Starting OTA");
+  wifiManager.setAPCallback(setConfigModeCallback);
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.addParameter(&custom_blynk_token);
+  wifiManager.setTimeout(120);
 
-      ArduinoOTA.setHostname(_hostname);
-      // ArduinoOTA.setPassword(_hostpass);
-      ArduinoOTA.begin();
+  while(!wifiManager.autoConnect(HOSTNAME, HOSTPASS)) {
+    Serial.println("failed to connect and hit timeout");
+    display.println("Failed to connect\nto Wifi", 1, 0, 0);
+    delay(3000);
+    ESP.reset();
+  }
 
-      Serial.println();
-      Serial.println("OTA Ready");
-    }
+  strcpy(blynk_token, custom_blynk_token.getValue());
 
-    void loop() {
-      ArduinoOTA.handle();
-    }
-};
+  if(shouldSaveConfig) {
+    saveConfig(blynk_token);
+  }
+}
+
+Wifi wifi = Wifi();
