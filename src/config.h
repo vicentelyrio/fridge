@@ -12,8 +12,10 @@
 //
 // WiFi Credentials
 // ----------------------------
-const char* SSID = "Vicente's Wi-Fi Network";
-const char* PASS = "giuliaCarina";
+// const char* SSID = "Vicente's Wi-Fi Network";
+// const char* PASS = "giuliaCarina";
+const char* SSID = "Sprinklr Guest";
+const char* PASS = "Sprinklr";
 const char* HOSTNAME = "fridge";
 const char* HOSTPASS = "esp82666";
 
