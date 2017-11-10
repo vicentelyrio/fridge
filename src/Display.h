@@ -9,7 +9,7 @@ class Display {
   public:
     Display();
     void splash();
-    void println(String text, int size, int x, int y);
+    void println(String text, int size = 1, int x = 0, int y = 0);
     void printDashboard(String dateNow, String temperature, String humidity, String startTime, String stopTime);
     void setup();
 };

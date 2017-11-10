@@ -13,7 +13,7 @@ void Display::setup() {
   adafruitDisplay.clearDisplay();
 }
 
-void Display::println(String text, int size = 1, int x = 0, int y = 0) {
+void Display::println(String text, int size, int x, int y) {
   adafruitDisplay.clearDisplay();
   adafruitDisplay.setTextWrap(true);
   adafruitDisplay.setCursor(x, y);

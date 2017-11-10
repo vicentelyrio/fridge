@@ -12,8 +12,8 @@
 //
 // Device Credentials
 // ----------------------------
-#define HOSTNAME "growbox"
-#define HOSTPASS "growbox"
+#define HOSTNAME "fridge"
+#define HOSTPASS "fridge"
 //
 // Blynk Config
 // ----------------------------

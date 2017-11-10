@@ -17,6 +17,17 @@ static void setConfigModeCallback(WiFiManager *wifiManager) {
   Serial.println(wifiManager->getConfigPortalSSID());
 }
 
+static void resetConfig() {
+  SPIFFS.format();
+  wifiManager.resetSettings();
+  display.println("Data cleared", 1, 0, 16);
+  delay(1000);
+  display.println("Restarting", 1, 0, 20);
+  delay(500);
+  ESP.reset();
+}
+
+
 Wifi::Wifi() {}
 
 IPAddress Wifi::getIP() {
@@ -24,6 +35,10 @@ IPAddress Wifi::getIP() {
 }
 
 char* Wifi::getBlynkToken() {
+  if(!blynk_token) {
+    resetConfig();
+    return false;
+  }
   return blynk_token;
 }
 

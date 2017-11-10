@@ -69,10 +69,6 @@ void displayDashboard() {
   unsigned long dashboardCurrent = millis();
 
   if(dashboardCurrent - dashboardStart > dashboardInterval) {
-    // int temperature = dht.getTemperature();
-    // int humidity = dht.getHumidity();
-    const char* startTime = blynk.getStartTime();
-    const char* stopTime = blynk.getStopTime();
     const char* dateNow = blynk.getTime();
 
     // display.printDashboard(String(dateNow), String(temperature), String(humidity), String(startTime), String(stopTime));
@@ -117,6 +113,10 @@ void setup() {
   Serial.setDebugOutput(true);
 
   display.setup();
+
+  pinMode(RELAYPIN, OUTPUT);
+  pinMode(BL, OUTPUT);
+  pinMode(BUTTONPIN, INPUT);
 
   setupWiFi(0);
   setupOTA(500);
