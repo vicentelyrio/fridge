@@ -1,5 +1,6 @@
 #include <config.h>
 #include <Wifi.h>
+#include <Thermometers.h>
 #include <Blynker.h>
 #include <BlynkSimpleEsp8266.h>
 #include <TimeLib.h>
@@ -7,7 +8,10 @@
 
 BlynkTimer timer;
 WidgetRTC rtc;
-WidgetLED lightStatusLed(V0);
+
+WidgetLED heatLED(V4);
+WidgetLED fanLED(V5);
+WidgetLED compressorLED(V6);
 
 int currentMin;
 int currentHour;
@@ -23,12 +27,26 @@ void syncRTC() {
   currentTimeInSeconds = hourInSeconds + minuteInSeconds + seconds;
 }
 
-void sendTempDataToServer() {
-  // float fridgeTemp = thermometers.getHumidity();
-  // float beerTemp = thermometers.getTemperature();
-  //
-  // Blynk.virtualWrite(V1, fridgeTemp);
-  // Blynk.virtualWrite(V2, beerTemp);
+void sendTempsDataToServer() {
+  float fridgeTemp = thermometers.getFridgeTemp();
+  float beerTemp = thermometers.getBeerTemp();
+  float freezerTemp = thermometers.getFreezerTemp();
+
+  Blynk.virtualWrite(V1, freezerTemp);
+  Blynk.virtualWrite(V2, fridgeTemp);
+  Blynk.virtualWrite(V3, beerTemp);
+}
+
+BLYNK_WRITE(V4) {
+  param.asInt() ? heatLED.on() : heatLED.off();
+}
+
+BLYNK_WRITE(V5) {
+  param.asInt() ? fanLED.on() : fanLED.off();
+}
+
+BLYNK_WRITE(V6) {
+  param.asInt() ? compressorLED.on() : compressorLED.off();
 }
 
 BLYNK_CONNECTED() {
@@ -52,7 +70,7 @@ void Blynker::setup(char* token) {
   }
 
   timer.setInterval(5000L, syncRTC);
-  timer.setInterval(1000L, sendTempDataToServer);
+  timer.setInterval(1000L, sendTempsDataToServer);
 }
 
 void Blynker::loop() {

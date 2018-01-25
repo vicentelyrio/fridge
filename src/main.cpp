@@ -1,5 +1,6 @@
 #include <Config.h>
 #include <Display.h>
+#include <Thermometers.h>
 #include <Wifi.h>
 #include <OTA.h>
 #include <Blynker.h>
@@ -51,6 +52,14 @@ void setupBlynk(int duration) {
   delay(duration);
   char* token = wifi.getBlynkToken();
   blynk.setup(token);
+  display.println("OK", 3, 24, 14);
+  delay(duration);
+}
+
+void setupThermometers(int duration) {
+  display.println("Thermometers Read", 1, 10, 20);
+  delay(duration);
+  thermometers.setup();
   display.println("OK", 3, 24, 14);
   delay(duration);
 }
@@ -113,16 +122,17 @@ void setup() {
   Serial.setDebugOutput(true);
 
   display.setup();
-
-  pinMode(RELAYPIN, OUTPUT);
-  pinMode(BL, OUTPUT);
-  pinMode(BUTTONPIN, INPUT);
+  //
+  // pinMode(RELAYPIN, OUTPUT);
+  // pinMode(BL, OUTPUT);
+  // pinMode(BUTTONPIN, INPUT);
 
   setupWiFi(0);
   setupOTA(500);
   setupBlynk(500);
-  displaySplash(1000);
-  displayWelcome(1000);
+  setupThermometers(500);
+  // displaySplash(1000);
+  // displayWelcome(1000);
 
   dashboardStart = millis();
 }
@@ -130,6 +140,6 @@ void setup() {
 void loop() {
   ota.loop();
   blynk.loop();
-  checkButtonAction();
-  displayDashboard();
+  // checkButtonAction();
+  // displayDashboard();
 }

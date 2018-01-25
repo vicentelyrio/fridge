@@ -6,7 +6,6 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
 #include <Display.h>
-#include <Wifi.h>
 
 #include <WiFiManager.h>
 

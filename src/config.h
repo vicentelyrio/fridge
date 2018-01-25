@@ -5,11 +5,6 @@
 // ----------------------------
 #define BAUD 115200
 //
-// Thermometers
-// ----------------------------
-#define ONE_WIRE_BUS D4
-#define TEMPERATURE_PRECISION 9
-//
 // Device Credentials
 // ----------------------------
 #define HOSTNAME "fridge"
@@ -22,6 +17,11 @@
 // Button Pin
 // ----------------------------
 #define BUTTONPIN D0
+//
+// Thermometers
+// ----------------------------
+#define ONE_WIRE_BUS D4
+#define TEMPERATURE_PRECISION 9
 //
 // Relay Pin
 // ----------------------------
@@ -36,4 +36,5 @@
 #define DIN D7
 #define CLK D5
 #define BL D8
+
 #endif
